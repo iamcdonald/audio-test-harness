@@ -18,10 +18,10 @@ pub const Harness = struct {
 };
 
 pub fn Render(comptime T: type) type {
-    // const T = sampleFormatToType(harness_opts.sample_format);
     return struct {
         file_name: ?[:0]const u8 = undefined,
         input: ?[]const T = undefined,
+        buffer_size: ?u32 = undefined,
     };
 }
 

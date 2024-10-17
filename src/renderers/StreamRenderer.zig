@@ -40,6 +40,7 @@ pub fn StreamRenderer(comptime harness_opts: Options.Harness) type {
                 .sample_rate = opts.sample_rate,
                 .channels = opts.channels,
                 .bit_depth = sampleFormatToAudio(opts.sample_format),
+                .buffer_size = render_opts.buffer_size orelse null,
             };
             const stream = try audio.createStream(sampleFormatToAudio(_opts.sample_format), stream_opts);
             defer stream.close();
@@ -49,4 +50,17 @@ pub fn StreamRenderer(comptime harness_opts: Options.Harness) type {
         }
     };
     return Renderer(harness_opts).build(&sr.render);
+}
+
+test "StreamRenderer - specify buffer_size" {
+    const buffer_size = 200;
+    const TestSynthesis = struct {
+        var buffer_size_correct = false;
+        var phase: f32 = 0;
+        pub fn render(_: []const i16, output: []i16) void {
+            buffer_size_correct = (buffer_size == output.len);
+        }
+    };
+    try StreamRenderer(.{}).build(TestSynthesis.render).render(.{ .buffer_size = buffer_size });
+    try std.testing.expectEqual(true, TestSynthesis.buffer_size_correct);
 }
