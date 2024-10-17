@@ -1,7 +1,5 @@
 const std = @import("std");
 
-pub const WavFormat = enum(u16) { PCM = 0x0001, FLOAT = 0x0003 };
-
 const PackWriter = struct {
     const Self = @This();
 
@@ -28,47 +26,104 @@ const PackWriter = struct {
 
 const pwu8 = PackWriter.init(u8);
 
+pub const WavFormat = enum(u16) { PCM = 0x0001, FLOAT = 0x0003 };
+
 const WavMetaData = struct { sample_rate: u32, channels: u16, bit_depth: u16, format: WavFormat };
 
-pub const Wav = struct {
-    const Self = @This();
+fn bitDepthToType(meta: WavMetaData) type {
+    return switch (meta.format) {
+        WavFormat.PCM => switch (meta.bit_depth) {
+            16 => i16,
+            24 => i24,
+            32 => i32,
+            else => error.UnsupportedFormat,
+        },
+        WavFormat.FLOAT => switch (meta.bit_depth) {
+            32 => f32,
+            else => error.UnsupportedFormat,
+        },
+    };
+}
 
-    _meta_data: WavMetaData,
+pub fn Wav(meta: WavMetaData) type {
+    const T = bitDepthToType(meta);
+    return struct {
+        const Self = @This();
+        const _meta_data = meta;
+        fn _writeHeader(_: *const Self, writer: std.io.AnyWriter, samples: u32) !void {
+            try writer.writeAll("RIFF");
+            // File Size
+            // 36(header length) + samples * 2
+            try pwu8.write(writer, u32, @truncate(36 + (samples * 2))); // file size
 
-    pub fn init(meta: WavMetaData) Self {
-        return .{ ._meta_data = meta };
-    }
+            try writer.writeAll("WAVE");
 
-    fn _writeHeader(self: Self, writer: std.io.AnyWriter, samples: u32) !void {
-        try writer.writeAll("RIFF");
-        // File Size
-        // 36(header length) + samples * 2
-        try pwu8.write(writer, u32, @truncate(36 + (samples * 2))); // file size
+            try writer.writeAll("fmt ");
+            try pwu8.write(writer, u32, 16); // length of format data
+            try pwu8.write(writer, u16, @intFromEnum(_meta_data.format)); // type of format
+            try pwu8.write(writer, u16, _meta_data.channels); // channels
+            try pwu8.write(writer, u32, _meta_data.sample_rate); //sample rate
 
-        try writer.writeAll("WAVE");
+            // (Sample Rate * BitsPerSample * Channels) / 8
+            const sbc = (_meta_data.sample_rate * _meta_data.bit_depth * _meta_data.channels) / 8;
+            try pwu8.write(writer, u32, @truncate(sbc));
 
-        try writer.writeAll("fmt ");
-        try pwu8.write(writer, u32, 16); // length of format data
-        try pwu8.write(writer, u16, @intFromEnum(self._meta_data.format)); // type of format
-        try pwu8.write(writer, u16, self._meta_data.channels); // channels
-        try pwu8.write(writer, u32, self._meta_data.sample_rate); //sample rate
+            // (BitsPerSample * Channels) / 8.1 - 8 bit mono2 - 8 bit stereo/16 bit mono4 - 16 bit stereo
+            const bc = (_meta_data.bit_depth * _meta_data.channels) / 8;
+            try pwu8.write(writer, u16, @truncate(bc));
 
-        // (Sample Rate * BitsPerSample * Channels) / 8
-        const sbc = (self._meta_data.sample_rate * self._meta_data.bit_depth * self._meta_data.channels) / 8;
-        try pwu8.write(writer, u32, @truncate(sbc));
+            try pwu8.write(writer, u16, _meta_data.bit_depth); // Bits per sample
 
-        // (BitsPerSample * Channels) / 8.1 - 8 bit mono2 - 8 bit stereo/16 bit mono4 - 16 bit stereo
-        const bc = (self._meta_data.bit_depth * self._meta_data.channels) / 8;
-        try pwu8.write(writer, u16, @truncate(bc));
+            try writer.writeAll("data");
+            try pwu8.write(writer, u32, samples * 2); // file size
+        }
 
-        try pwu8.write(writer, u16, self._meta_data.bit_depth); // Bits per sample
+        pub fn write(self: *const Self, writer: std.io.AnyWriter, samples: []const T) !void {
+            try self._writeHeader(writer, @truncate(samples.len));
+            try pwu8.writeAll(writer, T, samples);
+        }
+    };
+}
 
-        try writer.writeAll("data");
-        try pwu8.write(writer, u32, samples * 2); // file size
-    }
+// pub const Wavv = struct {
+//     const Self = @This();
 
-    pub fn write(self: Self, writer: std.io.AnyWriter, samples: []const i16) !void {
-        try self._writeHeader(writer, @truncate(samples.len));
-        try pwu8.writeAll(writer, i16, samples);
-    }
-};
+//     _meta_data: WavMetaData,
+
+//     pub fn init(meta: WavMetaData) Self {
+//         return .{ ._meta_data = meta };
+//     }
+
+//     fn _writeHeader(self: Self, writer: std.io.AnyWriter, samples: u32) !void {
+//         try writer.writeAll("RIFF");
+//         // File Size
+//         // 36(header length) + samples * 2
+//         try pwu8.write(writer, u32, @truncate(36 + (samples * 2))); // file size
+
+//         try writer.writeAll("WAVE");
+
+//         try writer.writeAll("fmt ");
+//         try pwu8.write(writer, u32, 16); // length of format data
+//         try pwu8.write(writer, u16, @intFromEnum(self._meta_data.format)); // type of format
+//         try pwu8.write(writer, u16, self._meta_data.channels); // channels
+//         try pwu8.write(writer, u32, self._meta_data.sample_rate); //sample rate
+
+//         // (Sample Rate * BitsPerSample * Channels) / 8
+//         const sbc = (self._meta_data.sample_rate * self._meta_data.bit_depth * self._meta_data.channels) / 8;
+//         try pwu8.write(writer, u32, @truncate(sbc));
+
+//         // (BitsPerSample * Channels) / 8.1 - 8 bit mono2 - 8 bit stereo/16 bit mono4 - 16 bit stereo
+//         const bc = (self._meta_data.bit_depth * self._meta_data.channels) / 8;
+//         try pwu8.write(writer, u16, @truncate(bc));
+
+//         try pwu8.write(writer, u16, self._meta_data.bit_depth); // Bits per sample
+
+//         try writer.writeAll("data");
+//         try pwu8.write(writer, u32, samples * 2); // file size
+//     }
+
+//     pub fn write(self: Self, writer: std.io.AnyWriter, samples: []const i16) !void {
+//         try self._writeHeader(writer, @truncate(samples.len));
+//         try pwu8.writeAll(writer, i16, samples);
+//     }
+// };
