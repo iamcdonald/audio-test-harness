@@ -24,8 +24,8 @@
     // internet connectivity.
     .dependencies = .{
         .audio = .{
-            .url = "git+https://github.com/iamcdonald/audio.git#5b5ec62850142c03d7027442c6c9e70037860982",
-            .hash = "1220e4bff5ad49c4331609a1b23bb0a1e6a354806b1bd5b0a363885b956873870bdd",
+            .url = "git+https://github.com/iamcdonald/audio.git",
+            .hash = "1220a1c32fd11be40b91fde5e9754a91ff571e95b95c5ff8fa56c91cbe569217ce8b",
         },
     },
     .paths = .{
