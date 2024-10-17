@@ -2,6 +2,8 @@ const std = @import("std");
 const Renderers = @import("./renderers/root.zig");
 const Options = @import("./Options.zig");
 
+pub const SampleFormat = Options.SampleFormat;
+
 pub fn AudioTestHarness(comptime harness_opts: Options.Harness) type {
     const T = Options.sampleFormatToType(harness_opts.sample_format);
     const RenderFnType = *const fn (input: []const T, output: []T) void;
