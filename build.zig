@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
-    const module = b.addModule("audio", .{ .root_source_file = b.path("src/AudioTestHarness.zig") });
+    const module = b.addModule("audio-test-harness", .{ .root_source_file = b.path("src/AudioTestHarness.zig") });
     module.addImport("audio", audio.module("audio"));
     module.linkLibrary(audio.artifact("portaudio"));
 
