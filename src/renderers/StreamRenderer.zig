@@ -44,7 +44,7 @@ pub fn StreamRenderer(comptime harness_opts: Options.Harness) type {
             const stream = try audio.createStream(sampleFormatToAudio(_opts.sample_format), stream_opts);
             defer stream.close();
             try stream.start(RenderWrapper.render);
-            audio.sleep(1000);
+            audio.sleep(harness_opts.seconds * 1000);
             try stream.stop();
         }
     };
