@@ -27,15 +27,7 @@ pub fn FileRenderer(comptime harness_opts: Options.Harness) type {
     const fr = struct {
         pub fn render(opts: Options.Harness, render_opts: Options.Render(T), render_fn: RenderFnType) !void {
             if (render_opts.file_name) |file_name| {
-                //WRITE FILE
-                // const bit_depth, const format = try sampleFormatToBitDepth(opts.sample_format);
-                // const wav = Wav.Wav(.{
-                //     .sample_rate = @intFromFloat(opts.sample_rate),
-                //     .channels = opts.channels,
-                //     .bit_depth = bit_depth,
-                //     .format = format,
-                // });
-                const output = try std.testing.allocator.alloc(T, @as(u32, @intFromFloat(opts.sample_rate)) * opts.seconds * opts.channels);
+                const output = try std.testing.allocator.alloc(T, @as(u32, @intFromFloat(opts.sample_rate * opts.seconds)) * opts.channels);
                 defer std.testing.allocator.free(output);
 
                 render_fn(render_opts.input orelse &[0]T{}, output);

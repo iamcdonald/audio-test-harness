@@ -14,7 +14,7 @@ pub const Harness = struct {
     sample_rate: f32 = 44100,
     channels: u8 = 1,
     sample_format: SampleFormat = SampleFormat.i16,
-    seconds: u16 = 1,
+    seconds: f32 = 1.0,
 };
 
 pub fn Render(comptime T: type) type {

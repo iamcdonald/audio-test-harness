@@ -45,7 +45,7 @@ pub fn StreamRenderer(comptime harness_opts: Options.Harness) type {
             const stream = try audio.createStream(sampleFormatToAudio(_opts.sample_format), stream_opts);
             defer stream.close();
             try stream.start(RenderWrapper.render);
-            audio.sleep(harness_opts.seconds * 1000);
+            audio.sleep(@as(u32, @intFromFloat(harness_opts.seconds * 1000)));
             try stream.stop();
         }
     };
@@ -61,6 +61,14 @@ test "StreamRenderer - specify buffer_size" {
             buffer_size_correct = (buffer_size == output.len);
         }
     };
-    try StreamRenderer(.{}).build(TestSynthesis.render).render(.{ .buffer_size = buffer_size });
+    try StreamRenderer(.{ .seconds = 0.1 }).build(TestSynthesis.render).render(.{ .buffer_size = buffer_size });
     try std.testing.expectEqual(true, TestSynthesis.buffer_size_correct);
+}
+
+test "StreamRenderer - handles fractional seconds" {
+    const TestSynthesis = struct {
+        var phase: f32 = 0;
+        pub fn render(_: []const i16, _: []i16) void {}
+    };
+    try StreamRenderer(.{ .seconds = 0.11111 }).build(TestSynthesis.render).render(.{});
 }
