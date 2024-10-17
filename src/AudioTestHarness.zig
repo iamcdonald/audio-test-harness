@@ -32,7 +32,8 @@ const TestSynthesis = struct {
             if (phase > 1) {
                 phase -= 1;
             }
-            const x: i16 = @intFromFloat(@sin(phase * 360.0 * std.math.pi / 180.0) * 3000);
+            const amp: f32 = @as(f32, @floatFromInt(std.math.maxInt(i16))) / 4.0;
+            const x: i16 = @intFromFloat(@sin(phase * 360.0 * std.math.pi / 180.0) * amp);
             output[i] = x;
         }
     }
@@ -40,7 +41,7 @@ const TestSynthesis = struct {
 
 test "AudioTestHarness - file" {
     try AudioTestHarness(.{}).build(&TestSynthesis.render).render(.{
-        .file_name = "test.wav",
+        .file_name = "./test-output/test.wav",
     });
 }
 
