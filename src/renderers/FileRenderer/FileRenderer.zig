@@ -30,7 +30,22 @@ pub fn FileRenderer(comptime harness_opts: Options.Harness) type {
                 const output = try std.testing.allocator.alloc(T, @as(u32, @intFromFloat(opts.sample_rate * opts.seconds)) * opts.channels);
                 defer std.testing.allocator.free(output);
 
-                render_fn(render_opts.input orelse &[0]T{}, output);
+                const total_samples = (opts.sample_rate * opts.seconds);
+                const buffer_size = render_opts.buffer_size orelse output.len;
+                const iterations: usize = @intFromFloat(@ceil(total_samples / @as(f32, @floatFromInt(buffer_size))));
+
+                for (0..iterations) |i| {
+                    const input = &[0]T{};
+                    const slice_start = (i * buffer_size * opts.channels);
+                    const slice_end = @min(output.len, ((i + 1) * buffer_size * opts.channels));
+                    const outs = output[slice_start..slice_end];
+                    if (render_opts.input) |in| {
+                        const ins = in[slice_start..slice_end];
+                        render_fn(ins, outs);
+                    } else {
+                        render_fn(input, outs);
+                    }
+                }
 
                 const file = try std.fs.cwd().createFile(file_name, .{});
                 defer file.close();
