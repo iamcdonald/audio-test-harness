@@ -1,6 +1,6 @@
 const std = @import("std");
-const Renderers = @import("./renderers/root.zig");
-const Options = @import("./Options.zig");
+const Renderers = @import("renderers/root.zig");
+const Options = @import("Options.zig");
 
 pub const SampleFormat = Options.SampleFormat;
 
@@ -32,7 +32,7 @@ const TestSynthesis = struct {
             if (phase > 1) {
                 phase -= 1;
             }
-            const amp: f32 = @as(f32, @floatFromInt(std.math.maxInt(i16))) / 4.0;
+            const amp: f32 = @as(f32, @floatFromInt(std.math.maxInt(i16))) * 0.6;
             const x: i16 = @intFromFloat(@sin(phase * 360.0 * std.math.pi / 180.0) * amp);
             output[i] = x;
         }

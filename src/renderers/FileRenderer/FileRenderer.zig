@@ -1,7 +1,7 @@
 const std = @import("std");
 const Renderer = @import("../Renderer.zig").Renderer;
 const Options = @import("../../Options.zig");
-const Wav = @import("./Wav.zig");
+const Wav = @import("Wav.zig");
 
 fn sampleFormatToBitDepth(sample_format: Options.SampleFormat) !struct { u16, Wav.WavFormat } {
     return switch (sample_format) {

@@ -1,5 +1,5 @@
 const Audio = @import("audio");
-const Wav = @import("../render/Wav.zig");
+const Wav = @import("renderers/FileRenderer/Wav.zig");
 
 pub const SampleFormat = enum {
     u8,
